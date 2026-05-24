@@ -78,7 +78,11 @@ export default function UsersPage() {
     e.preventDefault();
     setError('');
     const fd = new FormData(e.currentTarget);
-    const res = await fetch('/api/users/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv: fd.get('csv') }) });
+    const file = fd.get('file') as File | null;
+    let csv = fd.get('csv') as string;
+    if (file && file.size > 0) { csv = await file.text(); }
+    if (!csv?.trim()) { setError('Please paste CSV data or upload a file'); return; }
+    const res = await fetch('/api/users/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv }) });
     if (res.ok) { setShowImport(false); fetchUsers(); }
     else { const d = await res.json(); setError(d.error); }
   }
@@ -218,7 +222,16 @@ export default function UsersPage() {
             <p className="mb-3 text-sm text-gray-500">Columns: name, email, role, employeeId, department, position, tel</p>
             {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
             <form onSubmit={handleImport} className="space-y-3">
-              <textarea name="csv" rows={8} required placeholder="name,email,role,employeeId,department,position,tel&#10;John Doe,john@company.com,requester,EMP-005,HR,HR Staff,5001" className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm" />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Upload CSV File</label>
+                <input name="file" type="file" accept=".csv,text/csv" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              </div>
+              <div className="relative flex items-center">
+                <div className="flex-grow border-t border-gray-200" />
+                <span className="mx-3 flex-shrink text-xs text-gray-400">or paste CSV</span>
+                <div className="flex-grow border-t border-gray-200" />
+              </div>
+              <textarea name="csv" rows={6} placeholder="name,email,role,employeeId,department,position,tel&#10;John Doe,john@company.com,requester,EMP-005,HR,HR Staff,5001" className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm" />
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => { setShowImport(false); setError(''); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Cancel</button>
                 <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Import</button>

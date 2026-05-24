@@ -23,6 +23,8 @@ export default function DevicesPage() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showImport, setShowImport] = useState(false);
+  const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
 
   const [type, setType] = useState('');
   const [status, setStatus] = useState('');
@@ -62,6 +64,33 @@ export default function DevicesPage() {
       .catch(() => {});
   }, []);
 
+  const handleImport = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
+    setImportResult(null);
+    const fd = new FormData(e.currentTarget);
+    const file = fd.get('file') as File | null;
+    let csv = fd.get('csv') as string;
+
+    if (file && file.size > 0) {
+      csv = await file.text();
+    }
+    if (!csv?.trim()) { setError('Please paste CSV data or upload a file'); return; }
+
+    const res = await fetch('/api/devices/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csv }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setImportResult(data.results);
+      fetchDevices();
+    } else {
+      setError(data.error || 'Import failed');
+    }
+  };
+
   const handleExport = () => {
     window.open('/api/devices/export', '_blank');
   };
@@ -71,6 +100,10 @@ export default function DevicesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Devices</h1>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => { setShowImport(true); setImportResult(null); setError(''); }}>
+            <Upload className="h-4 w-4" />
+            Import
+          </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4" />
             Export
@@ -171,6 +204,43 @@ export default function DevicesPage() {
             </div>
           )}
         </Card>
+      )}
+      {/* Import Dialog */}
+      {showImport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">Import Devices (CSV)</h2>
+            <p className="mb-1 text-sm text-gray-500">Columns: name, type, brand, model, serialNumber, status</p>
+            <p className="mb-3 text-xs text-gray-400">Upload a .csv file or paste CSV data below. Status is optional (defaults to &quot;available&quot;).</p>
+            {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+            {importResult && (
+              <div className="mb-3 rounded-lg bg-green-50 p-3 text-sm text-green-700">
+                Created: {importResult.created}, Skipped: {importResult.skipped}
+                {importResult.errors.length > 0 && (
+                  <ul className="mt-2 list-disc pl-4 text-xs text-red-600">
+                    {importResult.errors.slice(0, 10).map((e, i) => <li key={i}>{e}</li>)}
+                  </ul>
+                )}
+              </div>
+            )}
+            <form onSubmit={handleImport} className="space-y-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Upload CSV File</label>
+                <input name="file" type="file" accept=".csv,text/csv" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              </div>
+              <div className="relative flex items-center">
+                <div className="flex-grow border-t border-gray-200" />
+                <span className="mx-3 flex-shrink text-xs text-gray-400">or paste CSV</span>
+                <div className="flex-grow border-t border-gray-200" />
+              </div>
+              <textarea name="csv" rows={6} placeholder={"name,type,brand,model,serialNumber,status\nMacBook Pro,Laptop,Apple,MBP 16 M3,C02X123456,available"} className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm" />
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setShowImport(false)}>Cancel</Button>
+                <Button type="submit">Import</Button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
