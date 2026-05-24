@@ -11,12 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorAlert } from '@/components/ui/error-alert';
 import { Spinner } from '@/components/ui/spinner';
 import { DEVICE_STATUS_OPTIONS, DEVICE_STATUS_LABELS } from '@/lib/constants';
+import { Upload, X, ImageIcon } from 'lucide-react';
 
 export default function NewDevicePage() {
   const router = useRouter();
   const [deviceTypes, setDeviceTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [photos, setPhotos] = useState<{ name: string; url: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -40,6 +44,32 @@ export default function NewDevicePage() {
       .catch(() => {});
   }, []);
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/upload', { method: 'POST', body: fd });
+        if (res.ok) {
+          const data = await res.json();
+          setPhotos((prev) => [...prev, { name: data.name, url: data.url }]);
+        }
+      }
+    } catch {
+      // silent
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -55,6 +85,7 @@ export default function NewDevicePage() {
         purchasePrice: form.purchasePrice ? Number(form.purchasePrice) : undefined,
         purchaseDate: form.purchaseDate || undefined,
         warrantyExpiry: form.warrantyExpiry || undefined,
+        photos,
       };
 
       const res = await fetch('/api/devices', {
@@ -156,6 +187,34 @@ export default function NewDevicePage() {
             <div className="space-y-1.5">
               <Label htmlFor="assetTag">Asset Tag</Label>
               <Input id="assetTag" value={form.assetTag} onChange={(e) => updateField('assetTag', e.target.value)} placeholder="e.g. IT-001" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Device Photos</Label>
+              {photos.length > 0 && (
+                <div className="flex flex-wrap gap-3">
+                  {photos.map((photo, i) => (
+                    <div key={i} className="group relative h-24 w-24 overflow-hidden rounded-lg border border-gray-200">
+                      <img src={photo.url} alt={photo.name} className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        className="absolute right-1 top-1 rounded-full bg-black/50 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors">
+                {uploading ? (
+                  <><Spinner className="h-4 w-4" /> Uploading...</>
+                ) : (
+                  <><Upload className="h-4 w-4" /> Click to upload photos</>
+                )}
+                <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
+              </label>
             </div>
 
             <div className="space-y-1.5">

@@ -58,6 +58,7 @@ export interface DeviceItem {
   warrantyExpiry?: string;
   supplier?: string;
   assetTag?: string;
+  photos?: { name: string; url: string }[];
   notes?: string;
   createdAt: string;
   updatedAt: string;

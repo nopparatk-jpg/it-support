@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@
 import { Select } from '@/components/ui/select';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import type { DeviceItem, AssignmentItem, UserItem } from '@/lib/types';
-import { ArrowLeft, Edit, UserPlus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Edit, UserPlus, RotateCcw, ImageIcon } from 'lucide-react';
 
 export default function DeviceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -141,6 +141,18 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
                 </div>
               ))}
             </dl>
+            {device.photos && device.photos.length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-4">
+                <p className="mb-2 text-sm font-medium text-gray-500">Photos</p>
+                <div className="flex flex-wrap gap-3">
+                  {device.photos.map((photo, i) => (
+                    <a key={i} href={photo.url} target="_blank" rel="noopener noreferrer" className="block h-32 w-32 overflow-hidden rounded-lg border border-gray-200 hover:border-blue-400 transition-colors">
+                      <img src={photo.url} alt={photo.name} className="h-full w-full object-cover" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             {device.notes && (
               <div className="mt-4 border-t border-gray-100 pt-4">
                 <p className="text-sm font-medium text-gray-500">Notes</p>

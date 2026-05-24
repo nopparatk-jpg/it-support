@@ -13,6 +13,7 @@ export interface IDevice {
   warrantyExpiry?: Date;
   supplier?: string;
   assetTag?: string;
+  photos: { name: string; url: string }[];
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +32,7 @@ const DeviceSchema = new Schema<IDevice>(
     warrantyExpiry: Date,
     supplier: String,
     assetTag: String,
+    photos: [{ name: String, url: String }],
     notes: String,
   },
   { timestamps: true },
