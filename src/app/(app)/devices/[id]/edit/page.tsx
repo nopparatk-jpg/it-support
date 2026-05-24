@@ -72,16 +72,19 @@ export default function EditDevicePage({ params }: { params: Promise<{ id: strin
     if (!files?.length) return;
     setUploading(true);
     try {
-      for (const rawFile of Array.from(files)) {
+      const uploads = Array.from(files).map(async (rawFile) => {
         const file = await compressImage(rawFile);
         const fd = new FormData();
         fd.append('file', file);
         const res = await fetch('/api/upload', { method: 'POST', body: fd });
         if (res.ok) {
           const data = await res.json();
-          setPhotos((prev) => [...prev, { name: data.name, url: data.url }]);
+          return { name: data.name, url: data.url };
         }
-      }
+        return null;
+      });
+      const results = (await Promise.all(uploads)).filter(Boolean) as { name: string; url: string }[];
+      if (results.length) setPhotos((prev) => [...prev, ...results]);
     } catch {
       // silent
     } finally {

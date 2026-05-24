@@ -47,8 +47,6 @@ export async function POST(req: NextRequest) {
         results.skipped++;
         continue;
       }
-      // Prevent duplicates within the same import
-      if (existingSerials.has(p.serialNumber)) continue;
       existingSerials.add(p.serialNumber);
 
       toCreate.push({
