@@ -134,6 +134,55 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Mobile: Quick actions at top for agents */}
+        {isAgent && (
+          <div className="lg:hidden space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Status</Label>
+                    <Select
+                      value={ticket.status}
+                      onChange={(e) => updateTicket({ status: e.target.value })}
+                      className="h-9 text-xs"
+                    >
+                      {STATUS_OPTIONS.map((s) => (
+                        <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Priority</Label>
+                    <Select
+                      value={ticket.priority}
+                      onChange={(e) => updateTicket({ priority: e.target.value })}
+                      className="h-9 text-xs"
+                    >
+                      {PRIORITY_OPTIONS.map((p) => (
+                        <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Assign</Label>
+                    <Select
+                      value={ticket.assignedTo?._id ?? ''}
+                      onChange={(e) => updateTicket({ assignedTo: e.target.value })}
+                      className="h-9 text-xs"
+                    >
+                      <option value="">Unassigned</option>
+                      {agents.map((a) => (
+                        <option key={a._id} value={a._id}>{a.name}</option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Main content */}
         <div className="space-y-6 lg:col-span-2">
           {/* Ticket info */}
@@ -295,9 +344,9 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
           )}
         </div>
 
-        {/* Sidebar - actions */}
+        {/* Sidebar - actions (desktop only, mobile version is above) */}
         {isAgent && (
-          <div className="space-y-4">
+          <div className="hidden lg:block space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Actions</CardTitle>

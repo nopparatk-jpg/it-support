@@ -78,7 +78,7 @@ export default function TicketsPage() {
 
       {/* Filters */}
       <Card className="p-4">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="space-y-3 md:space-y-0 md:flex md:flex-wrap md:items-center md:gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
@@ -88,24 +88,26 @@ export default function TicketsPage() {
               className="pl-9"
             />
           </div>
-          <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
-            <option value="">All Status</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-            ))}
-          </Select>
-          <Select value={priority} onChange={(e) => { setPriority(e.target.value); setPage(1); }}>
-            <option value="">All Priority</option>
-            {PRIORITY_OPTIONS.map((p) => (
-              <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
-            ))}
-          </Select>
-          <Select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }}>
-            <option value="">All Categories</option>
-            {categories.map((c) => (
-              <option key={c._id} value={c._id}>{c.name}</option>
-            ))}
-          </Select>
+          <div className="grid grid-cols-3 gap-2 md:flex md:gap-3">
+            <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+              <option value="">All Status</option>
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              ))}
+            </Select>
+            <Select value={priority} onChange={(e) => { setPriority(e.target.value); setPage(1); }}>
+              <option value="">All Priority</option>
+              {PRIORITY_OPTIONS.map((p) => (
+                <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
+              ))}
+            </Select>
+            <Select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }}>
+              <option value="">All Categories</option>
+              {categories.map((c) => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </Select>
+          </div>
         </div>
       </Card>
 
@@ -119,7 +121,8 @@ export default function TicketsPage() {
         <p className="py-12 text-center text-sm text-gray-500">No tickets found</p>
       ) : (
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50 text-left">
@@ -152,6 +155,30 @@ export default function TicketsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {tickets.map((t) => (
+              <div
+                key={t._id}
+                onClick={() => router.push(`/tickets/${t._id}`)}
+                className="flex flex-col gap-2 px-4 py-3 active:bg-gray-50 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-blue-600">{t.ticketNumber}</span>
+                  <span className="text-xs text-gray-400">{formatDate(t.createdAt)}</span>
+                </div>
+                <p className="text-sm font-medium text-gray-900 line-clamp-2">{t.subject}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">{t.requester?.name ?? '-'}</span>
+                  <div className="flex items-center gap-1.5">
+                    <StatusBadge type="priority" value={t.priority} />
+                    <StatusBadge type="ticket" value={t.status} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Pagination */}

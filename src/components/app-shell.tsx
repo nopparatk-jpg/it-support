@@ -359,7 +359,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
                 {/* Notification dropdown */}
                 {notifMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-80 rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <div className="absolute right-0 top-full mt-1 w-[calc(100vw-2rem)] max-w-80 rounded-lg border border-gray-200 bg-white shadow-lg sm:w-80">
                     <div className="border-b border-gray-200 px-4 py-3">
                       <p className="text-sm font-semibold text-gray-900">Notifications</p>
                     </div>

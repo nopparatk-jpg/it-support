@@ -14,6 +14,7 @@ import { PRIORITY_OPTIONS, PRIORITY_LABELS } from '@/lib/constants';
 import type { CategoryItem } from '@/lib/types';
 import { Upload, X } from 'lucide-react';
 import { formatFileSize } from '@/lib/utils';
+import { compressImage } from '@/lib/image-resize';
 
 export default function NewTicketPage() {
   const router = useRouter();
@@ -41,7 +42,8 @@ export default function NewTicketPage() {
 
     setUploading(true);
     try {
-      for (const file of Array.from(selectedFiles)) {
+      for (const rawFile of Array.from(selectedFiles)) {
+        const file = await compressImage(rawFile);
         const formData = new FormData();
         formData.append('file', file);
         const res = await fetch('/api/upload', { method: 'POST', body: formData });

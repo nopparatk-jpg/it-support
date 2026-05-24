@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorAlert } from '@/components/ui/error-alert';
 import { Spinner } from '@/components/ui/spinner';
 import { DEVICE_STATUS_OPTIONS, DEVICE_STATUS_LABELS } from '@/lib/constants';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Camera } from 'lucide-react';
+import { compressImage } from '@/lib/image-resize';
 
 export default function EditDevicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -71,7 +72,8 @@ export default function EditDevicePage({ params }: { params: Promise<{ id: strin
     if (!files?.length) return;
     setUploading(true);
     try {
-      for (const file of Array.from(files)) {
+      for (const rawFile of Array.from(files)) {
+        const file = await compressImage(rawFile);
         const fd = new FormData();
         fd.append('file', file);
         const res = await fetch('/api/upload', { method: 'POST', body: fd });
@@ -236,14 +238,21 @@ export default function EditDevicePage({ params }: { params: Promise<{ id: strin
                   ))}
                 </div>
               )}
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors">
-                {uploading ? (
-                  <><Spinner className="h-4 w-4" /> Uploading...</>
-                ) : (
-                  <><Upload className="h-4 w-4" /> Click to upload photos</>
-                )}
-                <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
-              </label>
+              <div className="flex gap-2">
+                <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors">
+                  {uploading ? (
+                    <><Spinner className="h-4 w-4" /> Uploading...</>
+                  ) : (
+                    <><Upload className="h-4 w-4" /> Upload photos</>
+                  )}
+                  <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors md:hidden">
+                  <Camera className="h-4 w-4" />
+                  <span>Camera</span>
+                  <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
+                </label>
+              </div>
             </div>
 
             <div className="space-y-1.5">
