@@ -46,6 +46,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'assignment.return': 'Returned device',
   'license.create': 'Created license',
   'license.update': 'Updated license',
+  'license.import': 'Imported licenses',
   'license.delete': 'Deleted license',
   'category.create': 'Created category',
   'category.update': 'Updated category',

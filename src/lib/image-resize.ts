@@ -6,14 +6,11 @@
 
 const MAX_DIMENSION = 1920;
 const JPEG_QUALITY = 0.8;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // Skip compression if already under 5MB
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // Compress files over 1MB
 
 export async function compressImage(file: File): Promise<File> {
   // Skip non-image files
   if (!file.type.startsWith('image/')) return file;
-
-  // Skip small files
-  if (file.size <= MAX_FILE_SIZE) return file;
 
   return new Promise((resolve) => {
     const img = new Image();
@@ -23,9 +20,16 @@ export async function compressImage(file: File): Promise<File> {
       URL.revokeObjectURL(url);
 
       let { width, height } = img;
+      const needsResize = width > MAX_DIMENSION || height > MAX_DIMENSION;
+      const needsCompress = file.size > MAX_FILE_SIZE;
 
-      // Scale down if either dimension exceeds max
-      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+      // Skip if both dimensions are fine and file is small enough
+      if (!needsResize && !needsCompress) {
+        resolve(file);
+        return;
+      }
+
+      if (needsResize) {
         const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
         width = Math.round(width * ratio);
         height = Math.round(height * ratio);
@@ -37,7 +41,7 @@ export async function compressImage(file: File): Promise<File> {
 
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        resolve(file); // Fallback to original
+        resolve(file);
         return;
       }
 
@@ -45,11 +49,14 @@ export async function compressImage(file: File): Promise<File> {
 
       canvas.toBlob(
         (blob) => {
+          // Release canvas memory
+          canvas.width = 0;
+          canvas.height = 0;
+
           if (!blob) {
             resolve(file);
             return;
           }
-          // Keep original name but change extension to .jpg
           const name = file.name.replace(/\.[^.]+$/, '.jpg');
           resolve(new File([blob], name, { type: 'image/jpeg' }));
         },
@@ -60,7 +67,7 @@ export async function compressImage(file: File): Promise<File> {
 
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      resolve(file); // Fallback to original
+      resolve(file);
     };
 
     img.src = url;

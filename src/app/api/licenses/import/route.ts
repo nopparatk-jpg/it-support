@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     results.created = toCreate.length;
 
     await logActivity({
-      action: 'license.bulk_import',
+      action: 'license.import',
       actor: user._id.toString(),
       metadata: { created: results.created, skipped: results.skipped },
     });

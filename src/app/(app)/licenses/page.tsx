@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ export default function LicensesPage() {
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
   const [importError, setImportError] = useState('');
 
-  const fetchLicenses = () => {
+  const fetchLicenses = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
     if (status) params.set('status', status);
@@ -38,10 +38,9 @@ export default function LicensesPage() {
         setTotal(data.total ?? 0);
       })
       .finally(() => setLoading(false));
-  };
+  }, [status, type, search, page]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchLicenses(); }, [status, type, search, page]);
+  useEffect(() => { fetchLicenses(); }, [fetchLicenses]);
 
   const handleImport = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
