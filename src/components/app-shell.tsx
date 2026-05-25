@@ -20,7 +20,7 @@ import {
   Laptop,
   KeyRound,
   Users,
-  FolderTree,
+
   Settings,
   ClipboardList,
   Bell,
@@ -154,12 +154,6 @@ const navSections: NavSection[] = [
         label: 'Users',
         href: '/admin/users',
         icon: <Users className="h-5 w-5" />,
-        roles: ['admin'],
-      },
-      {
-        label: 'Categories',
-        href: '/admin/categories',
-        icon: <FolderTree className="h-5 w-5" />,
         roles: ['admin'],
       },
       {
