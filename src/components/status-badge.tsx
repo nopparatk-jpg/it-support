@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
-type StatusType = 'ticket' | 'priority' | 'device' | 'license';
+type StatusType = 'ticket' | 'priority' | 'device' | 'license' | 'assignment';
 
 const statusColorMap: Record<StatusType, Record<string, string>> = {
   ticket: {
@@ -27,6 +27,10 @@ const statusColorMap: Record<StatusType, Record<string, string>> = {
     active: 'bg-green-100 text-green-800 border-green-200',
     expired: 'bg-red-100 text-red-800 border-red-200',
     cancelled: 'bg-gray-100 text-gray-800 border-gray-200',
+  },
+  assignment: {
+    active: 'bg-green-100 text-green-800 border-green-200',
+    returned: 'bg-gray-100 text-gray-800 border-gray-200',
   },
 };
 

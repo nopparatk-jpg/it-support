@@ -229,7 +229,7 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
                       <td className="px-4 py-3 text-gray-600">{formatDate(a.assignedDate)}</td>
                       <td className="px-4 py-3 text-gray-600">{a.returnDate ? formatDate(a.returnDate) : '-'}</td>
                       <td className="px-4 py-3">
-                        <StatusBadge type="device" value={a.status} />
+                        <StatusBadge type="assignment" value={a.status} />
                       </td>
                     </tr>
                   ))}
