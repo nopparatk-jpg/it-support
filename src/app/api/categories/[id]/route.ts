@@ -29,3 +29,23 @@ export async function PATCH(
     return errorResponse(error);
   }
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await connectDB();
+    await requireAuth(['admin']);
+
+    const { id } = await params;
+    const category = await Category.findByIdAndDelete(id);
+    if (!category) {
+      throw new ApiError(404, 'Category not found');
+    }
+
+    return NextResponse.json({ message: 'Category deleted' });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
