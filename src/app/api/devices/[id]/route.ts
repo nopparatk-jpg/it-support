@@ -20,10 +20,14 @@ export async function GET(
       throw new ApiError(404, 'Device not found');
     }
 
-    const activeAssignments = await Assignment.find({ device: id, status: 'active' })
-      .populate('user', 'name email employeeId department');
+    const assignments = await Assignment.find({ device: id })
+      .populate('user', 'name email employeeId department')
+      .sort({ assignedDate: -1 });
 
-    return NextResponse.json({ device, activeAssignments });
+    const active = assignments.find((a) => a.status === 'active');
+    const currentAssignee = active?.user ?? null;
+
+    return NextResponse.json({ device, assignments, currentAssignee });
   } catch (error) {
     return errorResponse(error);
   }
