@@ -17,6 +17,7 @@ export async function GET() {
       devicesByStatus,
       devicesByType,
       licensesByStatus,
+      licenseSeats,
       activeAssignmentsCount,
       unassignedTicketsCount,
     ] = await Promise.all([
@@ -32,6 +33,10 @@ export async function GET() {
       License.aggregate([
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
+      License.aggregate([
+        { $match: { status: 'active' } },
+        { $group: { _id: null, totalSeats: { $sum: '$totalSeats' }, usedSeats: { $sum: '$usedSeats' } } },
+      ]),
       Assignment.countDocuments({ status: 'active' }),
       Ticket.countDocuments({
         assignedTo: null,
@@ -39,11 +44,14 @@ export async function GET() {
       }),
     ]);
 
+    const seats = licenseSeats[0] ?? { totalSeats: 0, usedSeats: 0 };
+
     return NextResponse.json({
       ticketsByStatus: Object.fromEntries(ticketsByStatus.map((r: { _id: string; count: number }) => [r._id, r.count])),
       devicesByStatus: Object.fromEntries(devicesByStatus.map((r: { _id: string; count: number }) => [r._id, r.count])),
       devicesByType: Object.fromEntries(devicesByType.map((r: { _id: string; count: number }) => [r._id, r.count])),
       licensesByStatus: Object.fromEntries(licensesByStatus.map((r: { _id: string; count: number }) => [r._id, r.count])),
+      licenseSeats: { total: seats.totalSeats, used: seats.usedSeats },
       activeAssignmentsCount,
       unassignedTicketsCount,
     });

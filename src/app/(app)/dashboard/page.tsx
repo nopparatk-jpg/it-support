@@ -16,12 +16,18 @@ import {
   Monitor,
   KeyRound,
   AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Wrench,
+  Archive,
 } from 'lucide-react';
 
 interface ReportsData {
   ticketsByStatus: Record<string, number>;
   devicesByStatus: Record<string, number>;
+  devicesByType: Record<string, number>;
   licensesByStatus: Record<string, number>;
+  licenseSeats: { total: number; used: number };
   activeAssignmentsCount: number;
   unassignedTicketsCount: number;
 }
@@ -37,6 +43,7 @@ interface Stats {
 export default function DashboardPage() {
   const { user, isAgent, isRequester } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [reports, setReports] = useState<ReportsData | null>(null);
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +68,7 @@ export default function DashboardPage() {
             activeLicenses,
             unassignedTickets: data.unassignedTicketsCount ?? 0,
           });
+          setReports(data);
         }
 
         if (ticketsRes.ok) {
@@ -153,6 +161,118 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Device & License Overview (agent/admin) */}
+      {isAgent && reports && (
+        <div className="grid gap-6 sm:grid-cols-2">
+          {/* Devices by Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Monitor className="h-5 w-5 text-green-600" />
+                Devices
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[
+                  { key: 'available', label: 'Available', icon: <CheckCircle2 className="h-4 w-4 text-green-500" />, color: 'bg-green-500' },
+                  { key: 'assigned', label: 'Assigned', icon: <Monitor className="h-4 w-4 text-blue-500" />, color: 'bg-blue-500' },
+                  { key: 'maintenance', label: 'Maintenance', icon: <Wrench className="h-4 w-4 text-yellow-500" />, color: 'bg-yellow-500' },
+                  { key: 'retired', label: 'Retired', icon: <Archive className="h-4 w-4 text-gray-400" />, color: 'bg-gray-400' },
+                ].map((s) => {
+                  const count = reports.devicesByStatus?.[s.key] ?? 0;
+                  const total = stats?.totalDevices ?? 1;
+                  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                  return (
+                    <div key={s.key}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-gray-600">
+                          {s.icon} {s.label}
+                        </span>
+                        <span className="font-medium text-gray-900">{count}</span>
+                      </div>
+                      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div className={`h-full rounded-full ${s.color}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <Link href="/devices" className="text-sm text-blue-600 hover:underline">
+                  View all devices →
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Licenses Overview */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-purple-600" />
+                Licenses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[
+                  { key: 'active', label: 'Active', icon: <CheckCircle2 className="h-4 w-4 text-green-500" />, color: 'bg-green-500' },
+                  { key: 'expired', label: 'Expired', icon: <XCircle className="h-4 w-4 text-red-500" />, color: 'bg-red-500' },
+                  { key: 'cancelled', label: 'Cancelled', icon: <Archive className="h-4 w-4 text-gray-400" />, color: 'bg-gray-400' },
+                ].map((s) => {
+                  const count = reports.licensesByStatus?.[s.key] ?? 0;
+                  const total = Object.values(reports.licensesByStatus ?? {}).reduce((a, b) => a + b, 0) || 1;
+                  const pct = Math.round((count / total) * 100);
+                  return (
+                    <div key={s.key}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-gray-600">
+                          {s.icon} {s.label}
+                        </span>
+                        <span className="font-medium text-gray-900">{count}</span>
+                      </div>
+                      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div className={`h-full rounded-full ${s.color}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Seat usage */}
+              {reports.licenseSeats && reports.licenseSeats.total > 0 && (
+                <div className="mt-4 border-t border-gray-100 pt-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Seat Usage</span>
+                    <span className="font-medium text-gray-900">
+                      {reports.licenseSeats.used} / {reports.licenseSeats.total}
+                    </span>
+                  </div>
+                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className={`h-full rounded-full ${
+                        reports.licenseSeats.used / reports.licenseSeats.total > 0.9
+                          ? 'bg-red-500'
+                          : 'bg-purple-500'
+                      }`}
+                      style={{ width: `${Math.round((reports.licenseSeats.used / reports.licenseSeats.total) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">
+                    {reports.licenseSeats.total - reports.licenseSeats.used} seats available
+                  </p>
+                </div>
+              )}
+              <div className="mt-3 border-t border-gray-100 pt-3">
+                <Link href="/licenses" className="text-sm text-blue-600 hover:underline">
+                  View all licenses →
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Tickets */}
