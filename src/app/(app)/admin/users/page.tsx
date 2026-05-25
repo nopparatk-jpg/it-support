@@ -205,9 +205,21 @@ export default function UsersPage() {
                 <div><label className="mb-1 block text-sm font-medium text-gray-700">Position</label><input name="position" defaultValue={editUser.position} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
                 <div><label className="mb-1 block text-sm font-medium text-gray-700">Tel</label><input name="tel" defaultValue={editUser.tel} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
               </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => { setEditUser(null); setError(''); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Cancel</button>
-                <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Update User</button>
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm(`Are you sure you want to delete ${editUser.name}?`)) return;
+                    const res = await fetch(`/api/users/${editUser._id}`, { method: 'DELETE' });
+                    if (res.ok) { setEditUser(null); fetchUsers(); }
+                    else { const d = await res.json(); setError(d.error); }
+                  }}
+                  className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                >Delete User</button>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => { setEditUser(null); setError(''); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Cancel</button>
+                  <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Update User</button>
+                </div>
               </div>
             </form>
           </div>

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@
 import { Select } from '@/components/ui/select';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import type { DeviceItem, AssignmentItem, UserItem } from '@/lib/types';
-import { ArrowLeft, Edit, UserPlus, RotateCcw, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Edit, UserPlus, RotateCcw, Trash2 } from 'lucide-react';
 
 export default function DeviceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -119,11 +119,24 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
           </h1>
           <StatusBadge type="device" value={device.status} />
         </div>
-        <Link href={`/devices/${id}/edit`}>
-          <Button variant="outline">
-            <Edit className="h-4 w-4" /> Edit
+        <div className="flex gap-2">
+          <Link href={`/devices/${id}/edit`}>
+            <Button variant="outline">
+              <Edit className="h-4 w-4" /> Edit
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            className="border-red-300 text-red-600 hover:bg-red-50"
+            onClick={async () => {
+              if (!confirm('Are you sure you want to delete this device?')) return;
+              const res = await fetch(`/api/devices/${id}`, { method: 'DELETE' });
+              if (res.ok) router.push('/devices');
+            }}
+          >
+            <Trash2 className="h-4 w-4" /> Delete
           </Button>
-        </Link>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

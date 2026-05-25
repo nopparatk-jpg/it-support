@@ -67,3 +67,29 @@ export async function PATCH(
     return errorResponse(error);
   }
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await connectDB();
+    const user = await requireAuth(['admin']);
+
+    const { id } = await params;
+    const ticket = await Ticket.findByIdAndDelete(id);
+    if (!ticket) {
+      throw new ApiError(404, 'Ticket not found');
+    }
+
+    await logActivity({
+      action: 'ticket.delete',
+      actor: user._id.toString(),
+      metadata: { ticketNumber: ticket.ticketNumber, subject: ticket.subject },
+    });
+
+    return NextResponse.json({ message: 'Ticket deleted' });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}

@@ -21,7 +21,8 @@ import {
   ACTION_LABELS,
 } from '@/lib/constants';
 import type { TicketItem, UserItem, ActivityItem } from '@/lib/types';
-import { ArrowLeft, Send, MessageSquare, Lock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Send, MessageSquare, Lock, Trash2 } from 'lucide-react';
 
 interface Comment {
   _id: string;
@@ -33,6 +34,7 @@ interface Comment {
 
 export default function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const { user, isAgent } = useAuth();
   const [ticket, setTicket] = useState<TicketItem | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -123,14 +125,29 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/tickets">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4" />
-            Back
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/tickets">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900">{ticket.ticketNumber}</h1>
+        </div>
+        {user?.role === 'admin' && (
+          <Button
+            variant="outline"
+            className="border-red-300 text-red-600 hover:bg-red-50"
+            onClick={async () => {
+              if (!confirm('Are you sure you want to delete this ticket?')) return;
+              const res = await fetch(`/api/tickets/${id}`, { method: 'DELETE' });
+              if (res.ok) router.push('/tickets');
+            }}
+          >
+            <Trash2 className="h-4 w-4" /> Delete
           </Button>
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-900">{ticket.ticketNumber}</h1>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

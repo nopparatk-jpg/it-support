@@ -49,3 +49,34 @@ export async function PATCH(
     return errorResponse(error);
   }
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await connectDB();
+    const currentUser = await requireAuth(['admin']);
+
+    const { id } = await params;
+
+    if (currentUser._id.toString() === id) {
+      throw new ApiError(400, 'Cannot delete your own account');
+    }
+
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    await logActivity({
+      action: 'user.delete',
+      actor: currentUser._id.toString(),
+      metadata: { name: user.name, email: user.email },
+    });
+
+    return NextResponse.json({ message: 'User deleted' });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
