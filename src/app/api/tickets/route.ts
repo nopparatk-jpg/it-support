@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
 import { errorResponse, ApiError } from '@/lib/api-utils';
 import { logActivity } from '@/lib/activity-log';
+import { notifyAgents } from '@/lib/notify';
 import { Ticket } from '@/models/Ticket';
 import { getNextTicketNumber } from '@/models/Counter';
 
@@ -89,6 +90,13 @@ export async function POST(req: NextRequest) {
       actor: user._id.toString(),
       ticket: ticket._id.toString(),
     });
+
+    await notifyAgents(
+      'New Ticket',
+      `${user.name} created ticket ${ticketNumber}: ${subject}`,
+      ticket._id.toString(),
+      user._id.toString(),
+    );
 
     return NextResponse.json({ ticket }, { status: 201 });
   } catch (error) {

@@ -37,11 +37,12 @@ import type { UserItem } from '@/lib/types';
 
 interface Notification {
   _id: string;
+  title: string;
   message: string;
   type: string;
   isRead: boolean;
   createdAt: string;
-  link?: string;
+  ticket?: string;
 }
 
 interface UserContextValue {
@@ -354,8 +355,23 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {/* Notification dropdown */}
                 {notifMenuOpen && (
                   <div className="absolute right-0 top-full mt-1 w-[calc(100vw-2rem)] max-w-80 rounded-lg border border-gray-200 bg-white shadow-lg sm:w-80">
-                    <div className="border-b border-gray-200 px-4 py-3">
+                    <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
                       <p className="text-sm font-semibold text-gray-900">Notifications</p>
+                      {unreadCount > 0 && (
+                        <button
+                          className="text-xs text-blue-600 hover:text-blue-800"
+                          onClick={async () => {
+                            await fetch('/api/notifications', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({}),
+                            });
+                            refreshNotifications();
+                          }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
                     </div>
                     <div className="max-h-64 overflow-y-auto">
                       {notifications.length === 0 ? (
@@ -364,18 +380,33 @@ export function AppShell({ children }: { children: ReactNode }) {
                         </p>
                       ) : (
                         notifications.slice(0, 10).map((n) => (
-                          <div
+                          <button
                             key={n._id}
                             className={cn(
-                              'border-b border-gray-100 px-4 py-3 text-sm last:border-0',
+                              'w-full border-b border-gray-100 px-4 py-3 text-left text-sm last:border-0 hover:bg-gray-50 transition-colors',
                               !n.isRead && 'bg-blue-50'
                             )}
+                            onClick={async () => {
+                              if (!n.isRead) {
+                                await fetch('/api/notifications', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ ids: [n._id] }),
+                                });
+                                refreshNotifications();
+                              }
+                              setNotifMenuOpen(false);
+                              if (n.ticket) {
+                                router.push(`/tickets/${n.ticket}`);
+                              }
+                            }}
                           >
-                            <p className="text-gray-700">{n.message}</p>
+                            <p className="font-medium text-gray-900">{n.title}</p>
+                            <p className="text-gray-600">{n.message}</p>
                             <p className="mt-1 text-xs text-gray-400">
                               {new Date(n.createdAt).toLocaleString()}
                             </p>
-                          </div>
+                          </button>
                         ))
                       )}
                     </div>

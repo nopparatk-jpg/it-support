@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
 import { errorResponse, ApiError } from '@/lib/api-utils';
 import { logActivity } from '@/lib/activity-log';
+import { notifyUser } from '@/lib/notify';
 import { Ticket } from '@/models/Ticket';
 
 export async function PATCH(
@@ -45,6 +46,16 @@ export async function PATCH(
       ticket: ticket._id.toString(),
       metadata: { from: oldStatus, to: status },
     });
+
+    // Notify requester if someone else changed the status
+    if (ticket.requester.toString() !== user._id.toString()) {
+      await notifyUser(
+        ticket.requester.toString(),
+        'Ticket Status Updated',
+        `${ticket.ticketNumber} status changed to ${status}`,
+        ticket._id.toString(),
+      );
+    }
 
     return NextResponse.json({ ticket });
   } catch (error) {

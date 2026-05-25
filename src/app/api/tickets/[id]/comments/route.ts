@@ -3,7 +3,9 @@ import { connectDB } from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
 import { errorResponse, ApiError } from '@/lib/api-utils';
 import { logActivity } from '@/lib/activity-log';
+import { notifyUser } from '@/lib/notify';
 import { Comment } from '@/models/Comment';
+import { Ticket } from '@/models/Ticket';
 
 export async function GET(
   _req: NextRequest,
@@ -67,6 +69,24 @@ export async function POST(
       ticket: id,
       metadata: { type },
     });
+
+    // Send notifications for public comments
+    if (type === 'public') {
+      const ticket = await Ticket.findById(id).select('ticketNumber requester assignedTo');
+      if (ticket) {
+        const requesterId = ticket.requester.toString();
+        const assignedId = ticket.assignedTo?.toString();
+
+        // If agent/admin commented → notify requester
+        if (requesterId !== user._id.toString()) {
+          await notifyUser(requesterId, 'New Reply', `${user.name} replied on ${ticket.ticketNumber}`, id);
+        }
+        // If requester commented → notify assigned agent
+        if (assignedId && assignedId !== user._id.toString()) {
+          await notifyUser(assignedId, 'New Reply', `${user.name} replied on ${ticket.ticketNumber}`, id);
+        }
+      }
+    }
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error) {
