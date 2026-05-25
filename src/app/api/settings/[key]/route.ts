@@ -10,12 +10,14 @@ export async function GET(
 ) {
   try {
     await connectDB();
-    await requireAuth(['admin']);
+    await requireAuth();
 
     const { key } = await params;
     const setting = await Setting.findOne({ key });
+    const values = setting?.values ?? [];
 
-    return NextResponse.json({ setting: setting || { key, values: [] } });
+    // Return both { values } and { [key] } for compatibility
+    return NextResponse.json({ values, [key]: values });
   } catch (error) {
     return errorResponse(error);
   }
@@ -38,7 +40,8 @@ export async function PUT(
       { upsert: true, new: true },
     );
 
-    return NextResponse.json({ setting });
+    const updated = setting.values;
+    return NextResponse.json({ values: updated, [key]: updated });
   } catch (error) {
     return errorResponse(error);
   }
