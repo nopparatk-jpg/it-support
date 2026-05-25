@@ -50,6 +50,8 @@ export const ACTION_LABELS: Record<string, string> = {
   'license.update': 'Updated license',
   'license.import': 'Imported licenses',
   'license.delete': 'Deleted license',
+  'license.assign': 'Assigned license',
+  'license.revoke': 'Revoked license',
   'category.create': 'Created category',
   'category.update': 'Updated category',
   'login': 'Logged in',

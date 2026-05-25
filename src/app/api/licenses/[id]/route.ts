@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { errorResponse, ApiError } from '@/lib/api-utils';
 import { logActivity } from '@/lib/activity-log';
 import { License } from '@/models/License';
+import { LicenseAssignment } from '@/models/LicenseAssignment';
 
 export async function GET(
   _req: NextRequest,
@@ -19,7 +20,11 @@ export async function GET(
       throw new ApiError(404, 'License not found');
     }
 
-    return NextResponse.json({ license });
+    const assignments = await LicenseAssignment.find({ license: id })
+      .populate('user', 'name email employeeId department')
+      .sort({ assignedDate: -1 });
+
+    return NextResponse.json({ license, assignments });
   } catch (error) {
     return errorResponse(error);
   }
