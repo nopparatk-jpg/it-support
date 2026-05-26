@@ -39,6 +39,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'user.create': 'Created user',
   'user.update': 'Updated user',
   'user.delete': 'Deleted user',
+  'user.reset_password': 'Reset password',
   'user.import': 'Imported users',
   'device.create': 'Created device',
   'device.update': 'Updated device',

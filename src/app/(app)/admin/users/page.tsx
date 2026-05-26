@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Search, Upload } from 'lucide-react';
+import { Plus, Search, Upload, KeyRound } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { StatusBadge } from '@/components/status-badge';
 import type { UserItem } from '@/lib/types';
@@ -15,6 +15,8 @@ export default function UsersPage() {
   const [showImport, setShowImport] = useState(false);
   const [editUser, setEditUser] = useState<UserItem | null>(null);
   const [error, setError] = useState('');
+  const [resetPwOpen, setResetPwOpen] = useState(false);
+  const [resetPwValue, setResetPwValue] = useState('');
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
@@ -206,22 +208,70 @@ export default function UsersPage() {
                 <div><label className="mb-1 block text-sm font-medium text-gray-700">Tel</label><input name="tel" defaultValue={editUser.tel} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
               </div>
               <div className="flex items-center justify-between pt-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!confirm(`Are you sure you want to delete ${editUser.name}?`)) return;
-                    const res = await fetch(`/api/users/${editUser._id}`, { method: 'DELETE' });
-                    if (res.ok) { setEditUser(null); fetchUsers(); }
-                    else { const d = await res.json(); setError(d.error); }
-                  }}
-                  className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                >Delete User</button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm(`Are you sure you want to delete ${editUser.name}?`)) return;
+                      const res = await fetch(`/api/users/${editUser._id}`, { method: 'DELETE' });
+                      if (res.ok) { setEditUser(null); fetchUsers(); }
+                      else { const d = await res.json(); setError(d.error); }
+                    }}
+                    className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >Delete User</button>
+                  <button
+                    type="button"
+                    onClick={() => { setResetPwOpen(true); setResetPwValue(''); }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-orange-300 px-3 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50"
+                  ><KeyRound className="h-3.5 w-3.5" /> Reset Password</button>
+                </div>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => { setEditUser(null); setError(''); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Cancel</button>
                   <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Update User</button>
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Dialog */}
+      {resetPwOpen && editUser && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">Reset Password</h2>
+            <p className="mb-3 text-sm text-gray-500">Set a new password for <strong>{editUser.name}</strong></p>
+            {error && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+            <input
+              type="password"
+              value={resetPwValue}
+              onChange={(e) => setResetPwValue(e.target.value)}
+              placeholder="New password (min 6 characters)"
+              className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => { setResetPwOpen(false); setError(''); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Cancel</button>
+              <button
+                type="button"
+                disabled={resetPwValue.length < 6}
+                onClick={async () => {
+                  setError('');
+                  const res = await fetch(`/api/users/${editUser._id}/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: resetPwValue }),
+                  });
+                  if (res.ok) {
+                    setResetPwOpen(false);
+                    alert('Password has been reset successfully');
+                  } else {
+                    const d = await res.json();
+                    setError(d.error);
+                  }
+                }}
+                className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+              >Reset Password</button>
+            </div>
           </div>
         </div>
       )}
