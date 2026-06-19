@@ -162,6 +162,7 @@ export default function DevicesPage() {
                   <th className="px-4 py-3 font-medium text-gray-500">Type</th>
                   <th className="px-4 py-3 font-medium text-gray-500">Serial #</th>
                   <th className="px-4 py-3 font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 font-medium text-gray-500">User</th>
                   <th className="px-4 py-3 font-medium text-gray-500">Warranty</th>
                 </tr>
               </thead>
@@ -180,6 +181,13 @@ export default function DevicesPage() {
                     <td className="px-4 py-3 text-gray-600 font-mono text-xs">{d.serialNumber}</td>
                     <td className="px-4 py-3">
                       <StatusBadge type="device" value={d.status} />
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {d.assignedTo ? (
+                        <span>{d.assignedTo.name}</span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {d.warrantyExpiry ? formatDate(d.warrantyExpiry) : '-'}

@@ -60,6 +60,7 @@ export interface DeviceItem {
   assetTag?: string;
   photos?: { name: string; url: string }[];
   notes?: string;
+  assignedTo?: { _id: string; name: string; email: string } | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { errorResponse, ApiError } from '@/lib/api-utils';
 import { logActivity } from '@/lib/activity-log';
 import { Device } from '@/models/Device';
+import { Assignment } from '@/models/Assignment';
 
 export async function GET(req: NextRequest) {
   try {
@@ -33,10 +34,24 @@ export async function GET(req: NextRequest) {
     const devices = await Device.find(filter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
+    // Attach the active assignee (if any) to each device
+    const assignments = await Assignment.find({
+      device: { $in: devices.map((d) => d._id) },
+      status: 'active',
+    })
+      .populate('user', 'name email')
+      .lean();
+    const assigneeByDevice = new Map(assignments.map((a) => [String(a.device), a.user]));
+    const devicesWithUser = devices.map((d) => ({
+      ...d,
+      assignedTo: assigneeByDevice.get(String(d._id)) ?? null,
+    }));
 
     return NextResponse.json({
-      devices,
+      devices: devicesWithUser,
       pagination: {
         page,
         limit,
