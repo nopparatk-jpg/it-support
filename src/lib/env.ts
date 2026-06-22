@@ -8,6 +8,7 @@ export const env = {
   MONGODB_URI: required('MONGODB_URI'),
   JWT_SECRET: required('JWT_SECRET'),
   get RESEND_API_KEY() { return process.env.RESEND_API_KEY ?? ''; },
-  get BLOB_READ_WRITE_TOKEN() { return process.env.BLOB_READ_WRITE_TOKEN ?? ''; },
+  get GOOGLE_SERVICE_ACCOUNT_KEY_BASE64() { return process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64 ?? ''; },
+  get GOOGLE_DRIVE_FOLDER_ID() { return process.env.GOOGLE_DRIVE_FOLDER_ID ?? ''; },
   get APP_URL() { return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'; },
 };

@@ -5,6 +5,7 @@ import { errorResponse, ApiError } from '@/lib/api-utils';
 import { logActivity } from '@/lib/activity-log';
 import { Device } from '@/models/Device';
 import { Assignment } from '@/models/Assignment';
+import { deletePhotosByUrls } from '@/lib/google-drive';
 
 export async function GET(
   _req: NextRequest,
@@ -50,9 +51,28 @@ export async function PUT(
       if (key in body) update[key] = body[key];
     }
 
+    let removedUrls: string[] = [];
+    if ('photos' in body) {
+      const existing = await Device.findById(id);
+      if (existing) {
+        const incomingUrls = new Set(
+          ((body.photos ?? []) as { url: string }[]).map((p) => p.url),
+        );
+        removedUrls = existing.photos
+          .filter((p: { url: string }) => !incomingUrls.has(p.url))
+          .map((p: { url: string }) => p.url);
+      }
+    }
+
     const device = await Device.findByIdAndUpdate(id, update, { new: true });
     if (!device) {
       throw new ApiError(404, 'Device not found');
+    }
+
+    // Delete removed photos from Drive only after the update has succeeded, so
+    // a failed update never leaves the device pointing at deleted files.
+    if (removedUrls.length) {
+      await deletePhotosByUrls(removedUrls);
     }
 
     await logActivity({
@@ -85,6 +105,10 @@ export async function DELETE(
     const device = await Device.findByIdAndDelete(id);
     if (!device) {
       throw new ApiError(404, 'Device not found');
+    }
+
+    if (device.photos?.length) {
+      await deletePhotosByUrls(device.photos.map((p: { url: string }) => p.url));
     }
 
     await logActivity({
