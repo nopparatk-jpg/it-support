@@ -49,22 +49,24 @@ export default function NewDevicePage() {
     const files = e.target.files;
     if (!files?.length) return;
     setUploading(true);
+    setError('');
     try {
-      const uploads = Array.from(files).map(async (rawFile) => {
+      const results: { name: string; url: string }[] = [];
+      for (const rawFile of Array.from(files)) {
         const file = await compressImage(rawFile);
         const fd = new FormData();
         fd.append('file', file);
         const res = await fetch('/api/upload', { method: 'POST', body: fd });
-        if (res.ok) {
-          const data = await res.json();
-          return { name: data.name, url: data.url };
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Upload failed');
         }
-        return null;
-      });
-      const results = (await Promise.all(uploads)).filter(Boolean) as { name: string; url: string }[];
+        const data = await res.json();
+        results.push({ name: data.name, url: data.url });
+      }
       if (results.length) setPhotos((prev) => [...prev, ...results]);
-    } catch {
-      // silent
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Photo upload failed');
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -72,7 +74,15 @@ export default function NewDevicePage() {
   };
 
   const removePhoto = (index: number) => {
+    const photo = photos[index];
     setPhotos((prev) => prev.filter((_, i) => i !== index));
+    if (photo?.url) {
+      fetch('/api/upload', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: photo.url }),
+      }).catch(() => {});
+    }
   };
 
   const updateField = (field: string, value: string) => {
